@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One by Labb — Dashboard Navigation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --labb-blue:#3f73b9; --labb-red:#e63e57; --labb-dark:#404951;
+  --labb-light-blue:#bbd5e9; --labb-light-gray:#c8d3d3; --labb-white:#fff;
+  --labb-teal:#61adc3; --labb-green:#25b34b; --labb-olive:#99b73d; --labb-purple:#9d56a2;
+  --font-display:'Poppins',Arial,sans-serif; --font-body:'Poppins',Arial,sans-serif;
+  --canvas:#eef3f8; --line:#e3e9ef; --muted:#7c8893;
+  --radius:10px; --radius-pill:999px;
+  --shadow-card:0 1px 2px rgba(64,73,81,.04),0 4px 16px rgba(63,115,185,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font-body);background:var(--canvas);color:var(--labb-dark);-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+/* ---- top control bar (mockup chrome) ---- */
+.controlbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:12px 22px;background:var(--labb-dark);color:#fff;flex-wrap:wrap}
+.controlbar .title{display:flex;align-items:baseline;gap:10px;font-weight:600;font-size:14px;letter-spacing:.2px}
+.controlbar .title b{font-weight:800;font-size:16px}
+.controlbar .title span{color:var(--labb-light-blue);font-weight:400;font-size:12.5px}
+.portal-tabs{display:flex;gap:4px;background:rgba(255,255,255,.08);padding:4px;border-radius:var(--radius-pill)}
+.portal-tabs button{color:rgba(255,255,255,.72);font-weight:600;font-size:13px;padding:7px 16px;border-radius:var(--radius-pill);transition:.18s}
+.portal-tabs button:hover{color:#fff}
+.portal-tabs button.on{background:#fff;color:var(--labb-blue)}
+.toggle{display:flex;align-items:center;gap:9px;font-size:12.5px;color:rgba(255,255,255,.82);font-weight:500;user-select:none;cursor:pointer}
+.switch{width:38px;height:21px;border-radius:999px;background:rgba(255,255,255,.22);position:relative;transition:.2s;flex:none}
+.switch::after{content:"";position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
+.toggle.on .switch{background:var(--labb-blue)}
+.toggle.on .switch::after{transform:translateX(17px)}
+
+/* ---- app frame ---- */
+.app{display:flex;height:calc(100vh - 49px);min-height:560px}
+
+/* sidebar */
+.sidebar{width:248px;flex:none;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 14px;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:9px;padding:4px 8px 18px}
+.brand .mark{width:30px;height:30px;border-radius:8px;background:var(--labb-blue);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:17px;font-family:var(--font-display)}
+.brand .wm{font-family:var(--font-display);font-weight:800;font-size:21px;color:var(--labb-dark);letter-spacing:-.3px}
+.brand .wm sup{font-size:9px;font-weight:600;top:-9px;color:var(--muted)}
+.navsection{font-size:10.5px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;padding:6px 10px 7px}
+.navitem{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:8px;color:var(--labb-dark);font-weight:500;font-size:14px;width:100%;text-align:left;position:relative;transition:.14s;margin-bottom:1px}
+.navitem:hover{background:#f3f7fb}
+.navitem.on{background:rgba(63,115,185,.10);color:var(--labb-blue);font-weight:600}
+.navitem.on::before{content:"";position:absolute;left:-14px;top:7px;bottom:7px;width:3px;border-radius:0 3px 3px 0;background:var(--labb-blue)}
+.navitem svg{width:19px;height:19px;flex:none;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.navitem .lbl{flex:1}
+.navitem.is-hidden{opacity:.42;text-decoration:line-through;text-decoration-color:var(--labb-light-gray)}
+
+/* change badges */
+.badge{font-size:9.5px;font-weight:700;letter-spacing:.3px;padding:2px 7px;border-radius:999px;white-space:nowrap;text-decoration:none;display:none}
+body.hl .badge{display:inline-block}
+body.hl .navitem.is-hidden{display:flex}
+.navitem:not(.is-hidden){}
+.navitem.is-hidden{display:none}
+.b-renamed{background:rgba(63,115,185,.14);color:var(--labb-blue)}
+.b-merged{background:rgba(157,86,162,.15);color:var(--labb-purple)}
+.b-moved{background:rgba(97,173,195,.18);color:#3f879b}
+.b-new{background:rgba(37,179,75,.15);color:#1d9a3f}
+.b-updated{background:rgba(63,115,185,.14);color:var(--labb-blue)}
+.b-hidden{background:var(--labb-light-gray);color:var(--labb-dark)}
+
+.sidebar-foot{margin-top:auto;padding:14px 10px 4px;border-top:1px solid var(--line)}
+.user{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--labb-light-blue);color:var(--labb-blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none}
+.user .nm{font-size:13px;font-weight:600;line-height:1.2}
+.user .rl{font-size:11px;color:var(--muted)}
+
+/* main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 26px;background:#fff;border-bottom:1px solid var(--line)}
+.topbar .search{display:flex;align-items:center;gap:9px;background:var(--canvas);border:1px solid var(--line);border-radius:var(--radius-pill);padding:8px 15px;color:var(--muted);font-size:13px;width:300px;max-width:38vw}
+.topbar .search svg{width:16px;height:16px;stroke:var(--muted);stroke-width:1.8;fill:none}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.iconbtn{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--labb-dark);position:relative;transition:.14s}
+.iconbtn:hover{background:var(--canvas)}
+.iconbtn svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.7;fill:none}
+.iconbtn .dot{position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--labb-red);border:1.5px solid #fff}
+.switchacct{display:flex;align-items:center;gap:9px;border:1px solid var(--labb-light-gray);border-radius:var(--radius-pill);padding:7px 8px 7px 14px;font-weight:600;font-size:13px;color:var(--labb-dark);position:relative}
+.switchacct:hover{border-color:var(--labb-blue);color:var(--labb-blue)}
+.switchacct svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.9;fill:none}
+.switchacct .acct{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.switchacct .chev{width:14px;height:14px}
+.sa-badge{position:absolute;top:-9px;right:0;display:none}
+body.hl .sa-badge{display:inline-block}
+
+/* content */
+.content{flex:1;overflow-y:auto;padding:26px 30px 40px}
+.crumb{font-size:12.5px;color:var(--muted);margin-bottom:5px}
+.crumb b{color:var(--labb-dark);font-weight:600}
+.page-h{display:flex;align-items:center;gap:11px;margin-bottom:3px}
+.page-h h1{font-family:var(--font-display);font-size:25px;font-weight:700;letter-spacing:-.4px;color:var(--labb-dark)}
+.page-sub{color:var(--muted);font-size:13.5px;margin-bottom:22px;max-width:680px}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:22px;flex-wrap:wrap}
+.tabs button{padding:10px 15px;font-size:13.5px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:.14s}
+.tabs button:hover{color:var(--labb-dark)}
+.tabs button.on{color:var(--labb-blue);border-bottom-color:var(--labb-blue)}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:22px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 19px;box-shadow:var(--shadow-card)}
+.kpi .k-l{font-size:12.5px;color:var(--muted);font-weight:500;margin-bottom:9px}
+.kpi .k-v{font-family:var(--font-display);font-size:29px;font-weight:700;color:var(--labb-dark);letter-spacing:-.5px;line-height:1}
+.kpi .k-c{font-size:11.5px;font-weight:600;margin-top:7px;color:var(--labb-green)}
+.kpi .k-c.flat{color:var(--muted)}
+
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-card);overflow:hidden}
+.panel-h{display:flex;align-items:center;justify-content:space-between;padding:15px 19px;border-bottom:1px solid var(--line)}
+.panel-h h3{font-size:15px;font-weight:700;color:var(--labb-dark)}
+.panel-b{padding:6px 0}
+.row{display:flex;align-items:center;justify-content:space-between;padding:13px 19px;border-bottom:1px solid #f1f5f9;font-size:13.5px}
+.row:last-child{border-bottom:none}
+.row .left{display:flex;align-items:center;gap:12px}
+.row .swatch{width:30px;height:30px;border-radius:7px;background:rgba(63,115,185,.10);color:var(--labb-blue);display:flex;align-items:center;justify-content:center}
+.row .swatch svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none}
+.row .meta b{font-weight:600;font-size:13.5px}
+.row .meta div{font-size:11.5px;color:var(--muted)}
+.tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px}
+.tag.green{background:rgba(37,179,75,.13);color:#1d9a3f}
+.tag.blue{background:rgba(63,115,185,.12);color:var(--labb-blue)}
+.tag.gray{background:#f0f3f6;color:var(--muted)}
+
+.btn{background:var(--labb-blue);color:#fff;font-weight:600;font-size:13px;padding:9px 16px;border-radius:var(--radius-pill)}
+.btn:hover{opacity:.92}
+
+.note{display:none;align-items:flex-start;gap:10px;background:rgba(187,213,233,.28);border:1px solid var(--labb-light-blue);border-radius:var(--radius);padding:12px 15px;margin-bottom:20px;font-size:13px;color:var(--labb-dark);line-height:1.5}
+body.hl .note.has{display:flex}
+.note svg{width:17px;height:17px;flex:none;margin-top:1px;stroke:var(--labb-blue);stroke-width:1.8;fill:none}
+
+.legend{display:none;gap:16px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:11px 16px;margin-bottom:20px;font-size:11.5px;color:var(--muted)}
+body.hl .legend{display:flex}
+.legend .li{display:flex;align-items:center;gap:7px}
+.legend .sw{width:11px;height:11px;border-radius:3px}
+
+@media(max-width:880px){
+  .sidebar{width:200px}
+  .topbar .search{display:none}
+}
+
+/* order / create event */
+.order-wrap{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
+.order-body{padding:18px 19px;display:grid;grid-template-columns:1fr 1fr;gap:15px 16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+.field label{font-size:12px;font-weight:600;color:var(--muted)}
+.control{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:13.5px;color:var(--labb-dark);background:#fff;cursor:pointer;transition:.14s}
+.control:hover{border-color:var(--labb-blue)}
+.control svg{width:15px;height:15px;stroke:var(--muted);stroke-width:1.8;fill:none;flex:none}
+.control.area{align-items:flex-start;min-height:58px;color:var(--muted)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:#fff;color:var(--labb-dark);font-weight:600;font-size:13px;padding:9px 15px;border-radius:var(--radius-pill);transition:.14s}
+.seg button:hover{border-color:var(--labb-blue);color:var(--labb-blue)}
+.seg button.on{background:var(--labb-blue);color:#fff;border-color:var(--labb-blue)}
+.order-summary{position:sticky;top:0}
+.sum-body{padding:16px 19px}
+.sum-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:13px;color:var(--muted)}
+.sum-row b{color:var(--labb-dark);font-weight:600;font-size:13px;text-align:right}
+.btn.block{display:block;width:100%;margin-top:16px;padding:12px;text-align:center}
+.sum-note{font-size:11.5px;color:var(--muted);margin-top:11px;line-height:1.5}
+.sum-success{display:flex;gap:11px;align-items:flex-start;padding:8px 0 4px}
+.sum-success svg{width:26px;height:26px;flex:none;stroke:var(--labb-green);stroke-width:2;fill:none}
+.sum-success b{font-size:14px;color:var(--labb-dark)}
+.sum-success .ss-sub{font-size:12px;color:var(--muted);margin-top:3px}
+@media(max-width:760px){.order-wrap{grid-template-columns:1fr}.order-body{grid-template-columns:1fr}}
+
+/* lab tests / compendium */
+.lab-tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.lab-tabs button{padding:10px 15px;font-size:13.5px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:.14s}
+.lab-tabs button:hover{color:var(--labb-dark)}
+.lab-tabs button.on{color:var(--labb-blue);border-bottom-color:var(--labb-blue)}
+.dropzone{border:2px dashed var(--labb-light-gray);border-radius:var(--radius);padding:34px 20px;text-align:center;color:var(--muted);cursor:pointer;transition:.16s;background:rgba(187,213,233,.10)}
+.dropzone:hover{border-color:var(--labb-blue);background:rgba(63,115,185,.05)}
+.dropzone svg{width:34px;height:34px;stroke:var(--labb-blue);stroke-width:1.6;fill:none;margin-bottom:10px}
+.dropzone b{display:block;color:var(--labb-dark);font-size:14px;margin-bottom:4px}
+.dropzone span{font-size:12.5px}
+.upload-done{display:flex;gap:12px;align-items:center;padding:24px 20px;border:1px solid var(--labb-green);background:rgba(37,179,75,.07);border-radius:var(--radius)}
+.upload-done svg{width:30px;height:30px;stroke:var(--labb-green);stroke-width:2;fill:none;flex:none}
+.upload-done b{font-size:14px;color:var(--labb-dark)}
+</style>
+</head>
+<body>
+
+<div class="controlbar">
+  <div class="title"><b>One by Labb</b><span>Dashboard navigation &middot; post-cleanup</span></div>
+  <div class="portal-tabs" id="portalTabs"></div>
+  <div class="toggle" id="hlToggle"><span>Highlight changes</span><div class="switch"></div></div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">L</div>
+      <div class="wm">Labb<sup>&reg;</sup></div>
+    </div>
+    <div class="navsection" id="navSection">Menu</div>
+    <nav id="nav"></nav>
+    <div class="sidebar-foot">
+      <div class="user">
+        <div class="avatar">JR</div>
+        <div><div class="nm">James Ramsey</div><div class="rl" id="footRole">Administrator</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+        <span>Search</span>
+      </div>
+      <div class="topbar-right">
+        <button class="iconbtn"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+        <button class="switchacct">
+          <svg viewBox="0 0 24 24"><path d="M3 8h13l-3-3"/><path d="M21 16H8l3 3"/></svg>
+          <span class="acct" id="acctName">Ramsey Diagnostics / Labb</span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          <span class="badge b-moved sa-badge">Replaces &ldquo;Manage As&rdquo;</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<script>
+const I = {
+  dashboard:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  workcues:'<path d="M9 5h11"/><path d="M9 12h11"/><path d="M9 19h11"/><path d="M3.6 4.4l1 1 2-2"/><path d="M3.6 11.4l1 1 2-2"/><path d="M3.6 18.4l1 1 2-2"/>',
+  events:'<rect x="3" y="4.5" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2.6" x2="8" y2="6"/><line x1="16" y1="2.6" x2="16" y2="6"/><path d="M6.5 14.6h3l1.4-2.2 2 4.2 1.2-2h3.4"/>',
+  order:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.4V3.2h6v1.2"/><line x1="12" y1="9.5" x2="12" y2="16"/><line x1="8.7" y1="12.75" x2="15.3" y2="12.75"/>',
+  clinics:'<rect x="4" y="4" width="16" height="16" rx="1.5"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="9.5" y1="10.5" x2="14.5" y2="10.5"/><line x1="4" y1="20" x2="20" y2="20"/>',
+  employers:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8.5 7V5.6A1.6 1.6 0 0 1 10.1 4h3.8A1.6 1.6 0 0 1 15.5 5.6V7"/><line x1="3" y1="12" x2="21" y2="12"/>',
+  supplies:'<path d="M20.5 7.3 12 3 3.5 7.3v9.4L12 21l8.5-4.3V7.3Z"/><path d="M3.5 7.3 12 11.6l8.5-4.3"/><line x1="12" y1="11.6" x2="12" y2="21"/><path d="M7.75 5.15 16.25 9.5"/>',
+  finance:'<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><circle cx="5.6" cy="12" r=".8" fill="currentColor" stroke="none"/><circle cx="18.4" cy="12" r=".8" fill="currentColor" stroke="none"/>',
+  resellers:'<circle cx="6" cy="12" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="18" cy="18" r="2.4"/><line x1="8.1" y1="10.9" x2="15.7" y2="7.1"/><line x1="8.1" y1="13.1" x2="15.7" y2="16.9"/>',
+  accounts:'<path d="M12 3 3 7.5 12 12l9-4.5L12 3Z"/><path d="M3 12.5 12 17l9-4.5"/><path d="M3 16.8 12 21l9-4.2"/>',
+  staff:'<circle cx="9" cy="8" r="3"/><path d="M3.6 19a5.4 5.4 0 0 1 10.8 0"/><path d="M16 5.6a3 3 0 0 1 0 5.6"/><path d="M17.6 19a5 5 0 0 0-2.6-4.4"/>',
+  tests:'<path d="M9 3h6"/><path d="M10 3v5.2L5.7 17.6A1.5 1.5 0 0 0 7.1 19.8h9.8a1.5 1.5 0 0 0 1.4-2.2L14 8.2V3"/><line x1="8" y1="14.2" x2="16" y2="14.2"/>',
+  consortiums:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="6.6" r="1.5" fill="currentColor" stroke="none"/><circle cx="16.7" cy="14.7" r="1.5" fill="currentColor" stroke="none"/><circle cx="7.3" cy="14.7" r="1.5" fill="currentColor" stroke="none"/>',
+  results:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.4V3.2h6v1.2"/><path d="M8.8 13l2 2 4-4"/>',
+  analytics:'<line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="11" width="3" height="6" rx="1"/><rect x="11" y="7" width="3" height="10" rx="1"/><rect x="16" y="13" width="3" height="4" rx="1"/>',
+  pricing:'<path d="M4 4h7l9 9-7 7-9-9V4Z"/><circle cx="8.4" cy="8.4" r="1.4" fill="currentColor" stroke="none"/>',
+  sales:'<path d="M3 13l3-8h12l3 8"/><path d="M3 13v5a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-5"/><path d="M3 13h5l1.4 2.4h5.2L21 13"/>',
+  support:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="4" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="20"/><line x1="4" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="20" y2="12"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.1 5.1l2.1 2.1M16.8 16.8l2.1 2.1M18.9 5.1l-2.1 2.1M7.2 16.8l-2.1 2.1"/>'
+};
+const BADGE = {renamed:'Renamed',merged:'Consolidated',moved:'Moved here',new:'New',updated:'Updated',hidden:'Hidden'};
+const ic = k => '<svg viewBox="0 0 24 24">'+(I[k]||'')+'</svg>';
+
+const PORTALS = {
+  admin:{ name:'Admin', role:'Administrator', acct:'Ramsey Diagnostics / Labb', section:'Platform',
+    kpis:[['Active clinics','312','+8 this month'],['Events this month','24,180','+12%'],['Pending results','46','flat'],['Open work cues','14','needs action']],
+    nav:[
+      {id:'dashboard',label:'Dashboard',icon:'dashboard'},
+      {id:'workcues',label:'Work Cues',icon:'workcues'},
+      {id:'events',label:'Events',icon:'events',tabs:['All','Testing','Physical','Bloodwork','Other']},
+      {id:'clinics',label:'Clinics',icon:'clinics',tabs:['Overview','Staff','Certifications','Tests','Pricing'],note:'Staff and Certifications are now managed inside each clinic. The Ledger, Subscription, Settings, and Notifications tabs were removed from the clinic detail page.'},
+      {id:'employers',label:'Employers',icon:'employers',tabs:['Overview','Staff','Tests','Pricing']},
+      {id:'resellers',label:'Resellers',icon:'resellers',tabs:['Overview','Staff','Accounts','Pricing']},
+      {id:'staff',label:'Staff',icon:'staff',change:{type:'renamed',from:'People'}},
+      {id:'tests',label:'Tests',icon:'tests',change:{type:'renamed',from:'Panels'}},
+      {id:'consortiums',label:'Consortiums',icon:'consortiums',change:{type:'renamed',from:'Randomization'},tabs:['Consortiums','Pools'],note:'A consortium is the top-level entity; pools are managed inside a consortium.'},
+      {id:'pricing',label:'Pricing',icon:'pricing',change:{type:'merged'},tabs:['Price schedules','Subscriptions'],note:'Subscriptions are now part of Pricing (recurring pricing), not a standalone surface.'},
+      {id:'analytics',label:'Analytics',icon:'analytics',change:{type:'merged'},tabs:['Overview','Generate report'],note:'Reports and Analytics are now one section. Generate reports directly from Analytics.'},
+      {id:'support',label:'Support Center',icon:'support',change:{type:'renamed',from:'Intervention'}},
+      {id:'settings',label:'Settings',icon:'settings',change:{type:'updated'},tabs:['General','Lab Integration','MRO Config','Integrations'],note:'Lab Integration and MRO Config now live in Settings alongside the other integrations.'},
+      {id:'training',label:'Training',icon:'support',change:{type:'hidden'},hidden:true}
+    ]},
+  clinic:{ name:'Clinic', role:'Clinic Manager', acct:'Tidewater Occupational Clinic', section:'Clinic',
+    kpis:[['Tests this month','842','+6%'],['Pending results','11','flat'],['Active staff','24','+2'],['Upcoming randoms','7','this week']],
+    nav:[
+      {id:'dashboard',label:'Dashboard',icon:'dashboard'},
+      {id:'employers',label:'Employers',icon:'employers'},
+      {id:'tests',label:'Tests',icon:'tests',change:{type:'renamed',from:'Panels'}},
+      {id:'consortiums',label:'Consortiums',icon:'consortiums',change:{type:'renamed',from:'Randomization'},tabs:['Consortiums','Pools']},
+      {id:'results',label:'Results',icon:'results'},
+      {id:'staff',label:'Staff',icon:'staff',change:{type:'renamed',from:'People'}},
+      {id:'supplies',label:'Supplies',icon:'supplies',tabs:['Catalog','Orders']},
+      {id:'analytics',label:'Analytics',icon:'analytics',change:{type:'merged'},tabs:['Overview','Generate report'],note:'Reports now live inside Analytics — generate them right from this page.'},
+      {id:'finance',label:'Finance',icon:'finance',tabs:['Invoices','Payouts']},
+      {id:'pricing',label:'Pricing',icon:'pricing',change:{type:'new'},tabs:['My prices','Subscriptions'],note:'Clinics can now see the catalog prices that apply to them. Subscriptions live here too.'},
+      {id:'sales',label:'Sales Tools',icon:'sales',tabs:['Inbox','Contracts','Asset library'],note:'Inbox-only (Mailboxes removed), with Contracts and a sales collateral Asset Library.'},
+      {id:'support',label:'Support Center',icon:'support',change:{type:'renamed',from:'Intervention'}},
+      {id:'settings',label:'Settings',icon:'settings',change:{type:'updated'},tabs:['General','Contracts','Notifications','Integrations'],note:'Contracts moved out of the sidebar and into Settings.'},
+      {id:'training',label:'Training',icon:'support',change:{type:'hidden'},hidden:true}
+    ]},
+  employer:{ name:'Employer', role:'HR Administrator', acct:'Harbor Logistics, Inc.', section:'Employer',
+    kpis:[['Tests this month','318','+9%'],['Pending results','5','flat'],['Active staff','140','+11'],['Locations','6','flat']],
+    nav:[
+      {id:'dashboard',label:'Dashboard',icon:'dashboard'},
+      {id:'order',label:'Order',icon:'order'},
+      {id:'tests',label:'Tests',icon:'tests',change:{type:'renamed',from:'Panels'},tabs:['Assigned tests'],note:'View and select the tests assigned to your account. Catalog internals are hidden, and employers no longer create test panels.'},
+      {id:'results',label:'Results',icon:'results'},
+      {id:'staff',label:'Staff',icon:'staff',change:{type:'renamed',from:'People'}},
+      {id:'supplies',label:'Supplies',icon:'supplies',tabs:['Catalog','Orders']},
+      {id:'analytics',label:'Analytics',icon:'analytics',change:{type:'merged'},tabs:['Overview','Generate report']},
+      {id:'finance',label:'Finance',icon:'finance',tabs:['Invoices','Payouts']},
+      {id:'pricing',label:'Pricing',icon:'pricing',change:{type:'new'},tabs:['My prices','Subscriptions'],note:'Employers can now see the catalog prices that apply to them. Subscriptions live here too.'},
+      {id:'support',label:'Support Center',icon:'support',change:{type:'renamed',from:'Intervention'}},
+      {id:'settings',label:'Settings',icon:'settings',tabs:['General','Notifications','Integrations']},
+      {id:'training',label:'Training',icon:'support',change:{type:'hidden'},hidden:true}
+    ]},
+  reseller:{ name:'Reseller', role:'Reseller Admin', acct:'Coastal Compliance Partners', section:'Reseller',
+    kpis:[['Managed accounts','58','+4'],['Tests this month','3,910','+7%'],['Active staff','12','flat'],['Revenue MTD','$71.4k','+5%']],
+    nav:[
+      {id:'dashboard',label:'Dashboard',icon:'dashboard'},
+      {id:'accounts',label:'Accounts',icon:'accounts',tabs:['Clinics','Employers']},
+      {id:'staff',label:'Staff',icon:'staff',change:{type:'renamed',from:'People'}},
+      {id:'supplies',label:'Supplies',icon:'supplies',tabs:['Catalog','Orders']},
+      {id:'analytics',label:'Analytics',icon:'analytics',change:{type:'merged'},tabs:['Overview','Generate report']},
+      {id:'finance',label:'Finance',icon:'finance',tabs:['Invoices','Payouts']},
+      {id:'pricing',label:'Pricing',icon:'pricing',change:{type:'merged'},tabs:['Price schedules','Subscriptions']},
+      {id:'sales',label:'Sales Tools',icon:'sales',tabs:['Inbox','Contracts','Asset library'],note:'Inbox-only (Mailboxes removed), with Contracts and a sales collateral Asset Library.'},
+      {id:'support',label:'Support Center',icon:'support',change:{type:'renamed',from:'Intervention'}},
+      {id:'settings',label:'Settings',icon:'settings'}
+    ]},
+  labcorp:{ name:'LabCorp', role:'Lab Partner', acct:'LabCorp', section:'Platform',
+    kpis:[['Active clinics','312','+8 this month'],['Events this month','24,180','+12%'],['Pending results','46','flat'],['Lab tests in catalog','4,182','+92']],
+    nav:[
+      {id:'dashboard',label:'Dashboard',icon:'dashboard'},
+      {id:'events',label:'Events',icon:'events',tabs:['All','Testing','Physical','Bloodwork','Other']},
+      {id:'clinics',label:'Clinics',icon:'clinics',tabs:['Overview','Staff','Certifications','Tests','Pricing']},
+      {id:'employers',label:'Employers',icon:'employers',tabs:['Overview','Staff','Tests','Pricing']},
+      {id:'resellers',label:'Resellers',icon:'resellers',tabs:['Overview','Staff','Accounts','Pricing']},
+      {id:'staff',label:'Staff',icon:'staff',change:{type:'renamed',from:'People'}},
+      {id:'tests',label:'Tests',icon:'tests',change:{type:'renamed',from:'Panels'}},
+      {id:'consortiums',label:'Consortiums',icon:'consortiums',change:{type:'renamed',from:'Randomization'},tabs:['Consortiums','Pools']},
+      {id:'pricing',label:'Pricing',icon:'pricing',change:{type:'merged'},tabs:['Price schedules','Subscriptions']},
+      {id:'analytics',label:'Analytics',icon:'analytics',change:{type:'merged'},tabs:['Overview','Generate report']},
+      {id:'support',label:'Support Center',icon:'support',change:{type:'renamed',from:'Intervention'}},
+      {id:'settings',label:'Settings',icon:'settings',tabs:['General','Lab Integration','MRO Config','Integrations']},
+      {id:'training',label:'Training',icon:'support',change:{type:'hidden'},hidden:true}
+    ]}
+};
+
+let current='admin', selected={}, orderType='Testing', labTab='Lab tests';
+Object.keys(PORTALS).forEach(k=>selected[k]=PORTALS[k].nav[0].id);
+
+// portal tabs
+const ptabs=document.getElementById('portalTabs');
+Object.entries(PORTALS).forEach(([k,p])=>{
+  const b=document.createElement('button');
+  b.textContent=p.name; b.dataset.k=k;
+  b.onclick=()=>{current=k;renderAll();};
+  ptabs.appendChild(b);
+});
+
+// highlight toggle
+const hl=document.getElementById('hlToggle');
+hl.onclick=()=>{document.body.classList.toggle('hl');hl.classList.toggle('on');};
+
+function badge(ch){
+  if(!ch) return '';
+  const lab = BADGE[ch.type] + (ch.from?(' &middot; '+ch.from):'');
+  return `<span class="badge b-${ch.type}">${lab}</span>`;
+}
+
+function renderNav(){
+  const p=PORTALS[current];
+  document.getElementById('navSection').textContent=p.section;
+  document.getElementById('footRole').textContent=p.role;
+  document.getElementById('acctName').textContent=p.acct;
+  const nav=document.getElementById('nav'); nav.innerHTML='';
+  p.nav.forEach(item=>{
+    const el=document.createElement('button');
+    el.className='navitem'+(item.id===selected[current]?' on':'')+(item.hidden?' is-hidden':'');
+    el.innerHTML=ic(item.icon)+`<span class="lbl">${item.label}</span>`+badge(item.change);
+    el.onclick=()=>{ if(item.hidden) return; selected[current]=item.id; renderAll(); };
+    nav.appendChild(el);
+  });
+  Array.from(ptabs.children).forEach(b=>b.classList.toggle('on',b.dataset.k===current));
+}
+
+function renderContent(){
+  const p=PORTALS[current];
+  const item=p.nav.find(n=>n.id===selected[current])||p.nav[0];
+  const c=document.getElementById('content');
+  const isDash=item.id==='dashboard';
+  const isOrder=item.id==='order';
+  const pageTitle=isOrder?'Create Event':item.label;
+  const crumbTail=isOrder?(item.label+' &nbsp;/&nbsp; Create Event'):item.label;
+
+  let html=`<div class="crumb"><b>${p.name}</b> &nbsp;/&nbsp; ${crumbTail}</div>
+    <div class="page-h"><h1>${pageTitle}</h1>${badge(item.change)}</div>`;
+  html+=`<div class="page-sub">${isDash?('Overview of activity for '+p.acct+'.'):(isOrder?('Order a new event for an employee at '+p.acct+'.'):'')}</div>`;
+
+  if(item.note){
+    html+=`<div class="note has"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r=".6" fill="currentColor" stroke="none"/></svg><div>${item.note}</div></div>`;
+  }
+
+  html+=`<div class="legend">
+    <span class="li"><span class="sw" style="background:#3f73b9"></span>Renamed</span>
+    <span class="li"><span class="sw" style="background:#9d56a2"></span>Consolidated</span>
+    <span class="li"><span class="sw" style="background:#61adc3"></span>Moved</span>
+    <span class="li"><span class="sw" style="background:#25b34b"></span>New</span>
+    <span class="li"><span class="sw" style="background:#c8d3d3"></span>Hidden</span></div>`;
+
+  if(item.tabs){
+    html+=`<div class="tabs">`+item.tabs.map((t,i)=>`<button class="${i===0?'on':''}">${t}</button>`).join('')+`</div>`;
+  }
+
+  if(isDash){
+    html+=`<div class="kpis">`+p.kpis.map(k=>`<div class="kpi"><div class="k-l">${k[0]}</div><div class="k-v">${k[1]}</div><div class="k-c ${k[2].startsWith('+')?'':'flat'}">${k[2]}</div></div>`).join('')+`</div>`;
+    html+=`<div class="panel"><div class="panel-h"><h3>Recent activity</h3><span class="tag gray">Last 7 days</span></div><div class="panel-b">`+
+      [['Negative result released','Collection #A-4821','green','Negative'],
+       ['Random selection generated','DOT pool &mdash; 12 selected','blue','Scheduled'],
+       ['Result in MRO review','Collection #A-4820','blue','In review'],
+       ['Staff member added','New collector certified','gray','Updated']]
+      .map(r=>`<div class="row"><div class="left"><div class="swatch">${ic('results')}</div><div class="meta"><b>${r[0]}</b><div>${r[1]}</div></div></div><span class="tag ${r[2]}">${r[3]}</span></div>`).join('')+
+      `</div></div>`;
+  } else if(isOrder){
+    html+=buildOrderPage(p);
+  } else if(current==='labcorp'&&item.id==='tests'){
+    html+=buildLabTests();
+  } else {
+    // generic content panel for the selected section
+    const plusBtn=(item.id==='analytics'||item.id==='pricing'||item.id==='sales'||item.id==='supplies');
+    const orderBtn=(current==='employer'&&item.id==='tests');
+    const headerRight = orderBtn
+      ? `<button class="btn" onclick="goOrder()">&rarr; Order</button>`
+      : plusBtn
+        ? `<button class="btn">+ ${item.id==='analytics'?'Generate report':item.id==='sales'?'New':item.id==='supplies'?'Order':'Add'}</button>`
+        : `<span class="tag gray">${p.acct}</span>`;
+    html+=`<div class="panel"><div class="panel-h"><h3>${item.tabs?item.tabs[0]:item.label}</h3>`+headerRight+
+      `</div><div class="panel-b">`+
+      genRows(item,p).map(r=>`<div class="row"><div class="left"><div class="swatch">${ic(r.icon)}</div><div class="meta"><b>${r.t}</b><div>${r.s}</div></div></div><span class="tag ${r.c}">${r.tag}</span></div>`).join('')+
+      `</div></div>`;
+  }
+  c.innerHTML=html;
+
+  // wire sub-tab interactions
+  c.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+    c.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  });
+}
+
+function goOrder(){ current='employer'; selected['employer']='order'; renderAll(); }
+function setOrderType(t){ orderType=t; renderContent(); }
+function orderPlaced(){
+  const b=document.querySelector('.order-summary .sum-body'); if(!b) return;
+  b.innerHTML=`<div class="sum-success"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.4 12.2l2.3 2.3 4.8-4.8"/></svg><div><b>Event ordered</b><div class="ss-sub">A secure link has been sent to the employee to complete the event at the selected site.</div></div></div><button class="btn block" onclick="renderContent()">Create another</button>`;
+}
+function buildOrderPage(p){
+  const chev='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
+  const types=['Testing','Physical','Bloodwork','Other'];
+  const what={Testing:['Test','DOT 5-Panel Urine'],Physical:['Exam','DOT Physical Exam'],Bloodwork:['Panel','Wellness Blood Panel'],Other:['Service','Breath Alcohol Test']};
+  const [whatLabel,whatValue]=what[orderType];
+  const field=(label,val,area)=>`<div class="field${area?' full':''}"><label>${label}</label><div class="control${area?' area':''}"><span>${val}</span>${area?'':chev}</div></div>`;
+  return `<div class="order-wrap">
+    <div class="panel order-form">
+      <div class="panel-h"><h3>Event details</h3><span class="tag blue">${orderType}</span></div>
+      <div class="order-body">
+        <div class="field full"><label>Event type</label><div class="seg">${types.map(t=>`<button class="${t===orderType?'on':''}" onclick="setOrderType('${t}')">${t}</button>`).join('')}</div></div>
+        ${field('Employee','Marcus Bell &middot; Driver')}
+        ${field(whatLabel,whatValue)}
+        ${field('Collection site','Tidewater Occupational Clinic')}
+        ${field('Reason / authority','Pre-employment')}
+        ${field('Schedule','Send to employee now')}
+        ${field('Notes','Add a note (optional)',true)}
+      </div>
+    </div>
+    <div class="panel order-summary">
+      <div class="panel-h"><h3>Order summary</h3></div>
+      <div class="sum-body">
+        <div class="sum-row"><span>Event</span><b>${orderType}</b></div>
+        <div class="sum-row"><span>${whatLabel}</span><b>${whatValue}</b></div>
+        <div class="sum-row"><span>Employee</span><b>Marcus Bell</b></div>
+        <div class="sum-row"><span>Site</span><b>Tidewater Occupational</b></div>
+        <div class="sum-row"><span>Reason</span><b>Pre-employment</b></div>
+        <button class="btn block" onclick="orderPlaced()">&rarr; Order Event</button>
+        <div class="sum-note">The employee receives a secure link to complete the event at the selected site.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function setLabTab(t){ labTab=t; renderContent(); }
+function compendiumUploaded(){
+  const d=document.querySelector('.dropzone-wrap'); if(!d) return;
+  d.innerHTML=`<div class="upload-done"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.4 12.2l2.3 2.3 4.8-4.8"/></svg><div><b>LabCorp_Compendium_2026.csv uploaded</b><div class="ss-sub">4,182 lab tests parsed &middot; ready to map to the catalog</div></div></div>`;
+}
+function buildLabTests(){
+  const tabs=['Catalog','Lab tests'];
+  let h=`<div class="lab-tabs">`+tabs.map(t=>`<button class="${t===labTab?'on':''}" onclick="setLabTab('${t}')">${t}</button>`).join('')+`</div>`;
+  if(labTab==='Catalog'){
+    h+=`<div class="panel"><div class="panel-h"><h3>Test catalog</h3><span class="tag gray">LabCorp</span></div><div class="panel-b">`+
+      [['DOT 5-Panel Urine','Regulated &middot; lab-based','blue','DOT'],
+       ['10-Panel Oral Fluid','Rapid screen','gray','Rapid'],
+       ['9-Panel Urine','Non-regulated','gray','Standard']]
+      .map(r=>`<div class="row"><div class="left"><div class="swatch">${ic('tests')}</div><div class="meta"><b>${r[0]}</b><div>${r[1]}</div></div></div><span class="tag ${r[2]}">${r[3]}</span></div>`).join('')+
+      `</div></div>`;
+  } else {
+    h+=`<div class="dropzone-wrap"><div class="dropzone" onclick="compendiumUploaded()">
+        <svg viewBox="0 0 24 24"><path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+        <b>Drag and drop your lab test compendium</b>
+        <span>or click to browse &middot; CSV or XLSX &middot; up to 50 MB</span>
+      </div></div>`;
+    h+=`<div class="panel" style="margin-top:18px"><div class="panel-h"><h3>Uploaded compendiums</h3><span class="tag green">1 active</span></div><div class="panel-b">`+
+      [['LabCorp_Compendium_2026.csv','4,182 lab tests &middot; Jun 5, 2026','green','Active'],
+       ['LabCorp_Compendium_2025Q4.csv','4,090 lab tests &middot; Dec 2, 2025','gray','Archived']]
+      .map(r=>`<div class="row"><div class="left"><div class="swatch">${ic('tests')}</div><div class="meta"><b>${r[0]}</b><div>${r[1]}</div></div></div><span class="tag ${r[2]}">${r[3]}</span></div>`).join('')+
+      `</div></div>`;
+    h+=`<div class="panel" style="margin-top:18px"><div class="panel-h"><h3>Mapped lab tests</h3><span class="tag gray">Preview</span></div><div class="panel-b">`+
+      [['Comprehensive Metabolic Panel','Test 322000 &middot; Serum','blue','Mapped'],
+       ['CBC With Differential','Test 005009 &middot; Whole blood','blue','Mapped'],
+       ['Lipid Panel','Test 303756 &middot; Serum','blue','Mapped'],
+       ['TSH','Test 004259 &middot; Serum','gray','Review']]
+      .map(r=>`<div class="row"><div class="left"><div class="swatch">${ic('tests')}</div><div class="meta"><b>${r[0]}</b><div>${r[1]}</div></div></div><span class="tag ${r[2]}">${r[3]}</span></div>`).join('')+
+      `</div></div>`;
+  }
+  return h;
+}
+
+function genRows(item,p){
+  const m={
+    clinics:[{icon:'clinics',t:'Tidewater Occupational Clinic',s:'Norfolk, VA &middot; 24 staff',c:'green',tag:'Active'},
+             {icon:'clinics',t:'Peninsula Health Services',s:'Hampton, VA &middot; 18 staff',c:'green',tag:'Active'},
+             {icon:'clinics',t:'Bayfront Testing Center',s:'Virginia Beach, VA &middot; 31 staff',c:'green',tag:'Active'}],
+    employers:[{icon:'employers',t:'Harbor Logistics, Inc.',s:'140 employees &middot; 6 locations',c:'blue',tag:'DOT'},
+               {icon:'employers',t:'Sentinel Freight Co.',s:'88 employees &middot; 3 locations',c:'blue',tag:'DOT'},
+               {icon:'employers',t:'Atlantic Build Group',s:'52 employees &middot; 2 locations',c:'gray',tag:'Non-DOT'}],
+    resellers:[{icon:'resellers',t:'Coastal Compliance Partners',s:'58 managed accounts',c:'green',tag:'Active'},
+               {icon:'resellers',t:'Southeast Screening LLC',s:'34 managed accounts',c:'green',tag:'Active'}],
+    staff:[{icon:'staff',t:'Maria Vega',s:'Certified collector',c:'green',tag:'Active'},
+           {icon:'staff',t:'Devon Pierce',s:'Site administrator',c:'green',tag:'Active'},
+           {icon:'staff',t:'Lena Cho',s:'Certified collector',c:'green',tag:'Active'}],
+    tests:[{icon:'tests',t:'DOT 5-Panel Urine',s:'Regulated &middot; lab-based',c:'blue',tag:'DOT'},
+           {icon:'tests',t:'10-Panel Oral Fluid',s:'Rapid screen',c:'gray',tag:'Rapid'},
+           {icon:'tests',t:'9-Panel Urine',s:'Non-regulated',c:'gray',tag:'Standard'}],
+    consortiums:[{icon:'consortiums',t:'DOT Random Consortium',s:'3 pools &middot; 412 members',c:'blue',tag:'DOT'},
+                 {icon:'consortiums',t:'Non-DOT Consortium',s:'1 pool &middot; 96 members',c:'gray',tag:'Standard'}],
+    results:[{icon:'results',t:'Collection #A-4821',s:'Released to employer',c:'green',tag:'Negative'},
+             {icon:'results',t:'Collection #A-4820',s:'Awaiting MRO',c:'blue',tag:'In review'},
+             {icon:'results',t:'Collection #A-4818',s:'Released to employer',c:'green',tag:'Negative'}],
+    analytics:[{icon:'analytics',t:'Testing volume',s:'Monthly trend',c:'blue',tag:'Live'},
+               {icon:'analytics',t:'Turnaround time',s:'Collection to result',c:'blue',tag:'Live'},
+               {icon:'results',t:'Compliance summary',s:'Generate as report',c:'gray',tag:'Report'}],
+    pricing:[{icon:'pricing',t:'DOT 5-Panel Urine',s:'Applies to your account',c:'gray',tag:'$38.00'},
+             {icon:'pricing',t:'10-Panel Oral Fluid',s:'Applies to your account',c:'gray',tag:'$29.50'},
+             {icon:'pricing',t:'Monthly platform',s:'Subscription',c:'blue',tag:'Recurring'}],
+    sales:[{icon:'sales',t:'Inbound inquiry',s:'Harbor Logistics &mdash; pricing',c:'blue',tag:'Inbox'},
+           {icon:'results',t:'Founding partner agreement',s:'Draft &middot; v2',c:'gray',tag:'Contract'},
+           {icon:'pricing',t:'One by Labb overview',s:'Sales collateral',c:'gray',tag:'Asset'}],
+    settings:[{icon:'settings',t:'Lab Integration',s:'Laboratory partner routing',c:'blue',tag:'Configured'},
+              {icon:'settings',t:'MRO Config',s:'Medical Review Officer',c:'blue',tag:'Configured'},
+              {icon:'results',t:'Contracts',s:'Account agreements',c:'gray',tag:'View'}],
+    accounts:[{icon:'clinics',t:'Tidewater Occupational Clinic',s:'Clinic &middot; Norfolk, VA',c:'green',tag:'Active'},
+              {icon:'employers',t:'Harbor Logistics, Inc.',s:'Employer &middot; 6 locations',c:'blue',tag:'DOT'}],
+    workcues:[{icon:'results',t:'Result ready to release',s:'Collection #A-4821 &middot; negative',c:'green',tag:'Release'},
+              {icon:'results',t:'MRO review pending',s:'Collection #A-4820',c:'blue',tag:'Review'},
+              {icon:'consortiums',t:'Random selection due',s:'DOT pool &middot; this week',c:'blue',tag:'Action'},
+              {icon:'staff',t:'Certification expiring',s:'Collector &mdash; 14 days',c:'gray',tag:'Renew'}],
+    events:[{icon:'tests',t:'Drug screen',s:'Collection #A-4821 &middot; Tidewater Occupational',c:'blue',tag:'Testing'},
+            {icon:'results',t:'DOT physical exam',s:'Harbor Logistics &middot; driver',c:'gray',tag:'Physical'},
+            {icon:'tests',t:'Lab blood panel',s:'Wellness draw &middot; reference lab',c:'gray',tag:'Bloodwork'},
+            {icon:'results',t:'Breath alcohol test',s:'Post-incident',c:'gray',tag:'Other'}],
+    supplies:[{icon:'supplies',t:'Labb eTest Cup 20',s:'Rapid 20-panel urine',c:'green',tag:'In stock'},
+              {icon:'supplies',t:'Oral fluid collection device',s:'Rapid screen',c:'gray',tag:'Reorder'},
+              {icon:'supplies',t:'Federal CCF forms',s:'DOT chain-of-custody',c:'green',tag:'In stock'},
+              {icon:'supplies',t:'Breath alcohol mouthpieces',s:'Box of 50',c:'gray',tag:'Reorder'}],
+    finance:[{icon:'finance',t:'Invoice #INV-3081',s:'Harbor Logistics &middot; due Jun 30',c:'blue',tag:'Open'},
+             {icon:'finance',t:'May settlement',s:'Payout received',c:'green',tag:'Paid'},
+             {icon:'finance',t:'Invoice #INV-3074',s:'Sentinel Freight Co.',c:'green',tag:'Paid'},
+             {icon:'finance',t:'Invoice #INV-3068',s:'Atlantic Build Group',c:'gray',tag:'Overdue'}]
+  };
+  return m[item.id]||[{icon:item.icon,t:item.label,s:p.acct,c:'gray',tag:'View'},
+                      {icon:item.icon,t:item.label+' settings',s:'Manage configuration',c:'gray',tag:'Open'}];
+}
+
+function renderAll(){renderNav();renderContent();}
+renderAll();
+</script>
+</body>
+</html>
